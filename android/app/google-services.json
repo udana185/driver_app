@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "154292031253",
+    "project_id": "driver-app-63d46",
+    "storage_bucket": "driver-app-63d46.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:154292031253:android:4421348a62d19bd61c231c",
+        "android_client_info": {
+          "package_name": "com.chillride.driversapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGJkM_bV72VNjKmYSTtYSLqUua4B2YJKw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
