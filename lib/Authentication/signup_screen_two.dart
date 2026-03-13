@@ -88,9 +88,12 @@ class _SignupScreenState extends State<SignupScreenTwo>
       {
         "id": firebaseUser.uid,
         "name": nameTextEditingController.text.trim(),
-        "email": nameTextEditingController.text.trim(),
-        "phone": nameTextEditingController.text.trim(),
+        "email": emailTextEditingController.text.trim(),
+        "phone": phoneTextEditingController.text.trim(),
       };
+
+      print("Saving driver to database...");
+
 
       DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
       driversRef.child(firebaseUser.uid).set(driverMap);

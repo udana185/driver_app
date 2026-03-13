@@ -1,8 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
+        android:usesCleartextTraffic="true"
         android:label="driver_app"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
@@ -33,6 +40,12 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+
+        <meta-data android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDYZRQPiJi7mk3ss6KwtHcmvI8jHmc7kGo"/>
+
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
