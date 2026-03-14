@@ -14,106 +14,118 @@ class SignupScreenTwo extends StatefulWidget {
   State<SignupScreenTwo> createState() => _SignupScreenState();
 }
 
-class _SignupScreenState extends State<SignupScreenTwo>
-{
-
-
+class _SignupScreenState extends State<SignupScreenTwo> {
   TextEditingController nameTextEditingController = TextEditingController();
   TextEditingController emailTextEditingController = TextEditingController();
   TextEditingController phoneTextEditingController = TextEditingController();
   TextEditingController passwordTextEditingController = TextEditingController();
 
-
-  validateForm(){
-    if(nameTextEditingController.text.length < 3)
-    {
-      Fluttertoast.showToast(msg: "name must be at least 3 characters.");
-    }
-    else if(emailTextEditingController.text.isEmpty) {
-      Fluttertoast.showToast(msg: "email is required.");
-    }
-    else if(!emailTextEditingController.text.contains("@"))
-    {
-      Fluttertoast.showToast(msg: "email is not valid.");
-    }
-    else if(phoneTextEditingController.text.isEmpty)
-    {
-      Fluttertoast.showToast(msg: "phone number is required.");
-    }
-    else if(!RegExp(r'^0[0-9]+$').hasMatch(phoneTextEditingController.text))
-    {
-      Fluttertoast.showToast(msg: "Phone number must start with 0 and contain only numbers.");
-    }
-    else if(phoneTextEditingController.text.length < 10)
-    {
-      Fluttertoast.showToast(msg: "phone number must be 10 characters long.");
-    }
-    else if(passwordTextEditingController.text.isEmpty)
-    {
-      Fluttertoast.showToast(msg: "password is required.");
-    }
-    else if(passwordTextEditingController.text.length < 6)
-    {
-      Fluttertoast.showToast(msg: "password must be atleast 6 characters.");
-    }
-    else{
+  validateForm() {
+    if (nameTextEditingController.text.trim().length < 3) {
+      Fluttertoast.showToast(msg: "Name must be at least 3 characters.");
+    } else if (emailTextEditingController.text.trim().isEmpty) {
+      Fluttertoast.showToast(msg: "Email is required.");
+    } else if (!emailTextEditingController.text.trim().contains("@")) {
+      Fluttertoast.showToast(msg: "Email is not valid.");
+    } else if (phoneTextEditingController.text.trim().isEmpty) {
+      Fluttertoast.showToast(msg: "Phone number is required.");
+    } else if (!RegExp(r'^0[0-9]+$')
+        .hasMatch(phoneTextEditingController.text.trim())) {
+      Fluttertoast.showToast(
+          msg: "Phone number must start with 0 and contain only numbers.");
+    } else if (phoneTextEditingController.text.trim().length != 10) {
+      Fluttertoast.showToast(msg: "Phone number must be exactly 10 digits.");
+    } else if (passwordTextEditingController.text.trim().isEmpty) {
+      Fluttertoast.showToast(msg: "Password is required.");
+    } else if (passwordTextEditingController.text.trim().length < 6) {
+      Fluttertoast.showToast(msg: "Password must be at least 6 characters.");
+    } else {
       saveDriverInfoNow();
     }
   }
 
-  saveDriverInfoNow() async
-  {
+  saveDriverInfoNow() async {
     showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext c)
-        {
-          return ProgressDialog(message: "Processing,Please wait...",);
-        }
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext c) {
+        return ProgressDialog(message: "Processing, Please wait...");
+      },
     );
 
+    try {
+      final UserCredential userCredential =
+      await fAuth.createUserWithEmailAndPassword(
+        email: emailTextEditingController.text.trim(),
+        password: passwordTextEditingController.text.trim(),
+      );
 
-    final User? firebaseUser = (
-        await fAuth.createUserWithEmailAndPassword(
-          email: emailTextEditingController.text.trim(),
-          password: passwordTextEditingController.text.trim(),
-        ).catchError((msg){
+      final User? firebaseUser = userCredential.user;
+
+      if (firebaseUser != null) {
+        Map<String, dynamic> driverMap = {
+          "id": firebaseUser.uid,
+          "name": nameTextEditingController.text.trim(),
+          "email": emailTextEditingController.text.trim(),
+          "phone": phoneTextEditingController.text.trim(),
+          "status": "registered",
+          "isEligible": false,
+          "isOnline": false,
+          "licenceUrl": "",
+          "medicalCertificateUrl": "",
+          "verificationSubmitted": false,
+          "verificationApproved": false,
+        };
+
+        DatabaseReference driversRef =
+        FirebaseDatabase.instance.ref().child("drivers");
+
+        await driversRef.child(firebaseUser.uid).set(driverMap);
+
+        currentFirebaseUser = firebaseUser;
+
+        if (mounted) {
+          Navigator.pop(context); // closes progress dialog
+        }
+
+        Fluttertoast.showToast(msg: "Account has been created.");
+
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (c) => DrivingLiceance()),
+          );
+        }
+      } else {
+        if (mounted) {
           Navigator.pop(context);
-          Fluttertoast.showToast(msg: "Error: " + msg.toString());
-        })
-      ).user;
-    if (firebaseUser != null)
-    {
-      Map driverMap =
-      {
-        "id": firebaseUser.uid,
-        "name": nameTextEditingController.text.trim(),
-        "email": emailTextEditingController.text.trim(),
-        "phone": phoneTextEditingController.text.trim(),
-      };
-
-      print("Saving driver to database...");
-
-
-      DatabaseReference driversRef = FirebaseDatabase.instance.ref().child("drivers");
-      driversRef.child(firebaseUser.uid).set(driverMap);
-
-      currentFirebaseUser = firebaseUser;
-      Fluttertoast.showToast(msg: "Account has been created.");
-      Navigator.push(context, MaterialPageRoute(builder: (c)=> DrivingLiceance()));
+        }
+        Fluttertoast.showToast(msg: "Account has not been created.");
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      Fluttertoast.showToast(msg: "Error: ${e.message}");
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+      Fluttertoast.showToast(msg: "Error: ${e.toString()}");
     }
-    else
-    {
-      Navigator.pop(context);
-      Fluttertoast.showToast(msg: "Account has not been created.");
-    }
-
   }
 
+  @override
+  void dispose() {
+    nameTextEditingController.dispose();
+    emailTextEditingController.dispose();
+    phoneTextEditingController.dispose();
+    passwordTextEditingController.dispose();
+    super.dispose();
+  }
 
   @override
-  Widget build(BuildContext context)
-  {
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -121,27 +133,11 @@ class _SignupScreenState extends State<SignupScreenTwo>
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-
-              const SizedBox(height: 8,),
-
+              const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Image.asset("images/chill_ride_light.png"),
               ),
-
-              //const SizedBox(height: 5,),
-
-
-
-              /*const Text("Driver Registration",
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),*/
-
-
               Card(
                 elevation: 6,
                 shape: RoundedRectangleBorder(
@@ -150,13 +146,13 @@ class _SignupScreenState extends State<SignupScreenTwo>
                 color: Colors.white,
                 child: Container(
                   width: 450,
-                  padding: EdgeInsets.all(30),
-
+                  padding: const EdgeInsets.all(30),
                   child: Column(
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: const Text("Driver Registration",
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(
+                          "Driver Registration",
                           style: TextStyle(
                             fontSize: 24,
                             color: Color(0xFF1A1A1A),
@@ -164,174 +160,95 @@ class _SignupScreenState extends State<SignupScreenTwo>
                           ),
                         ),
                       ),
-
-                      SizedBox(height: 15,),
-
+                      const SizedBox(height: 15),
                       TextField(
                         controller: nameTextEditingController,
-                        style: const TextStyle(
-                            color: Colors.grey
-                        ),
+                        style: const TextStyle(color: Colors.grey),
                         decoration: const InputDecoration(
                           labelText: "Name",
                           border: OutlineInputBorder(),
-                          //hintText: "Name",
-                          /*enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),*/
                           labelStyle: TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
                           ),
                         ),
                       ),
-
-                      SizedBox(height: 10,),
-
+                      const SizedBox(height: 10),
                       TextField(
                         controller: emailTextEditingController,
                         keyboardType: TextInputType.emailAddress,
-                        style: const TextStyle(
-                            color: Colors.grey
-                        ),
+                        style: const TextStyle(color: Colors.grey),
                         decoration: const InputDecoration(
                           labelText: "Email",
                           border: OutlineInputBorder(),
-                          /*hintText: "Email",
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),*/
                           labelStyle: TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
                           ),
                         ),
                       ),
-
-                      SizedBox(height: 10,),
-
+                      const SizedBox(height: 10),
                       TextField(
                         controller: phoneTextEditingController,
                         keyboardType: TextInputType.phone,
-                        style: const TextStyle(
-                            color: Colors.grey
-                        ),
+                        style: const TextStyle(color: Colors.grey),
                         decoration: const InputDecoration(
                           labelText: "Phone",
                           border: OutlineInputBorder(),
-                          /*hintText: "Phone",
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),*/
                           labelStyle: TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
                           ),
                         ),
                       ),
-
-                      SizedBox(height: 10,),
-
+                      const SizedBox(height: 10),
                       TextField(
                         controller: passwordTextEditingController,
                         keyboardType: TextInputType.text,
                         obscureText: true,
-                        style: const TextStyle(
-                            color: Colors.grey
-                        ),
+                        style: const TextStyle(color: Colors.grey),
                         decoration: const InputDecoration(
                           labelText: "Password",
                           border: OutlineInputBorder(),
-                          /*hintText: "Password",
-                          enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.grey),
-                          ),
-                          hintStyle: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 10,
-                          ),*/
                           labelStyle: TextStyle(
                             color: Colors.grey,
                             fontSize: 14,
                           ),
                         ),
                       ),
-
-                      SizedBox(height: 15,),
-
+                      const SizedBox(height: 15),
                       ElevatedButton(
-                        onPressed: ()
-                        {
+                        onPressed: () {
                           validateForm();
-                          Navigator.push(context, MaterialPageRoute(builder: (c)=> DrivingLiceance()));
                         },
-                        //style: ElevatedButton.styleFrom(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF1A1A1A),
-                        ),// button background
-
+                          backgroundColor: const Color(0xFF1A1A1A),
+                        ),
                         child: const Text(
                           "Sign Up",
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 15,
-                            //fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
                       TextButton(
-                        child: Text(
+                        child: const Text(
                           "Already have an account? Login Here",
                           style: TextStyle(color: Colors.grey),
                         ),
-                        onPressed: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (c)=> LoginScreen()));
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (c) => const LoginScreen()),
+                          );
                         },
                       ),
                     ],
                   ),
                 ),
               ),
-
-              /*ElevatedButton(
-                onPressed: ()
-                {
-                  //todo
-                },
-                //style: ElevatedButton.styleFrom(),
-                child: const Text(
-                  "Sign Up",
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 15,
-                    //fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),*/
             ],
           ),
         ),
