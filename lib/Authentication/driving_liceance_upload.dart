@@ -2,7 +2,7 @@
 // If Firebase Storage upload fails, the app still updates Realtime Database
 // with "upload_failed" placeholder values so the verification flow can continue.
 // Replace this later with proper URL handling once Storage access/rules are fixed.
-
+//jsahdsiyfugydgfuys
 import 'dart:io';
 import 'package:driver_app/Global/global.dart';
 import 'package:firebase_database/firebase_database.dart';
