@@ -4,14 +4,13 @@
 // Replace this later with proper URL handling once Storage access/rules are fixed.
 
 import 'dart:io';
-import 'package:driver_app/Global/global.dart';
-import 'package:driver_app/tabPages/home_tab.dart';
+
+import 'package:driver_app/MainScreens/main_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:driver_app/MainScreens/main_screen.dart';
 
 class DrivingLiceanceUpload extends StatefulWidget {
   const DrivingLiceanceUpload({super.key});
@@ -73,7 +72,7 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
         return;
       }
 
-      String uid = user.uid;
+      final String uid = user.uid;
 
       String frontUrl = "";
       String backUrl = "";
@@ -134,91 +133,168 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
     }
   }
 
+  Widget buildImagePickerCard({
+    required String title,
+    required String subtitle,
+    required File? imageFile,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: isUploading ? null : onTap,
+      child: Container(
+        width: double.infinity,
+        height: 170,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: imageFile == null
+            ? Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.camera_alt_outlined,
+              size: 34,
+              color: Colors.black54,
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1A1A1A),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+              ),
+            ),
+          ],
+        )
+            : Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.file(
+                imageFile,
+                width: double.infinity,
+                height: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            ),
+            Positioned(
+              right: 10,
+              top: 10,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.65),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
           "Upload Driving License",
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        elevation: 2,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            GestureDetector(
-              onTap: isUploading ? null : pickFrontImage,
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: frontImage == null
-                    ? const Center(child: Text("Tap to take FRONT photo"))
-                    : ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(frontImage!, fit: BoxFit.cover),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Driver Verification",
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A1A),
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: isUploading ? null : pickBackImage,
-              child: Container(
-                height: 150,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: backImage == null
-                    ? const Center(child: Text("Tap to take BACK photo"))
-                    : ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(backImage!, fit: BoxFit.cover),
+              const SizedBox(height: 8),
+              const Text(
+                "Please upload clear photos of the front and back of your driving license.",
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.black54,
                 ),
               ),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isUploading
-                    ? null
-                    : () {
-                  uploadLicenseToFirebase();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A1A1A),
-                  foregroundColor: Colors.white,
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                ),
-                child: isUploading
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: Colors.white,
+              const SizedBox(height: 24),
+              buildImagePickerCard(
+                title: "Front Side",
+                subtitle: "Tap to capture the front of your license",
+                imageFile: frontImage,
+                onTap: pickFrontImage,
+              ),
+              const SizedBox(height: 18),
+              buildImagePickerCard(
+                title: "Back Side",
+                subtitle: "Tap to capture the back of your license",
+                imageFile: backImage,
+                onTap: pickBackImage,
+              ),
+              const SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: isUploading
+                      ? null
+                      : () {
+                    uploadLicenseToFirebase();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1A1A1A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                )
-                    : const Text("Upload License"),
+                  child: isUploading
+                      ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  )
+                      : const Text(
+                    "Upload License",
+                    style: TextStyle(fontSize: 15),
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -13,41 +13,63 @@ class _DrivingLiceanceState extends State<DrivingLiceance> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A1A1A),
-        title: Image.asset(
-          "images/chill_ride.png",
-          height: 60,
-          fit: BoxFit.contain,
+        backgroundColor: Colors.black,
+
+        // FIX: makes the back arrow white and visible
+        iconTheme: const IconThemeData(color: Colors.white),
+
+        title: const Text(
+          "License Verification",
+          style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+
+      body: Padding(
+        padding: const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
+
+            const SizedBox(height: 20),
+
+            const Icon(
+              Icons.verified_user,
+              size: 120,
+              color: Colors.black,
+            ),
+
             const SizedBox(height: 30),
+
             const Text(
-              "Driver Verification",
+              "Driver Verification Required",
               style: TextStyle(
-                fontSize: 30,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
+                color: Color(0xFF1A1A1A),
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                "Upload clear front and back images of your driving licence to continue verification.",
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 13),
+
+            const SizedBox(height: 15),
+
+            const Text(
+              "To start accepting rides, please upload your driving license for verification.",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.black54,
               ),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
+
+            const SizedBox(height: 40),
+
+            SizedBox(
+              width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: ()
+                {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -58,10 +80,15 @@ class _DrivingLiceanceState extends State<DrivingLiceance> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A1A1A),
                   foregroundColor: Colors.white,
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
-                child: const Text("Upload Driving License"),
+                child: const Text(
+                  "Continue to Verification",
+                  style: TextStyle(fontSize: 16),
+                ),
               ),
             ),
           ],

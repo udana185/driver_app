@@ -21,6 +21,9 @@ class _HomeTabPageState extends State<HomeTabPage> {
 
   String driverStatus = "loading";
 
+  DatabaseReference? driverRef;
+  StreamSubscription<DatabaseEvent>? driverStatusSubscription;
+
   static const CameraPosition _kGooglePlex = CameraPosition(
     target: LatLng(37.42796133580664, -122.085749655962),
     zoom: 14.4746,
@@ -30,10 +33,10 @@ class _HomeTabPageState extends State<HomeTabPage> {
   void initState() {
     super.initState();
     checkIfLocationPermissionAllowed();
-    fetchDriverStatus();
+    listenToDriverStatus();
   }
 
-  Future<void> fetchDriverStatus() async {
+  void listenToDriverStatus() {
     try {
       if (currentFirebaseUser == null) {
         setState(() {
@@ -42,26 +45,29 @@ class _HomeTabPageState extends State<HomeTabPage> {
         return;
       }
 
-      DatabaseReference driverRef = FirebaseDatabase.instance
+      driverRef = FirebaseDatabase.instance
           .ref()
           .child("drivers")
           .child(currentFirebaseUser!.uid);
 
-      DatabaseEvent driverEvent = await driverRef.once();
+      driverStatusSubscription = driverRef!.onValue.listen((event) {
+        if (!mounted) return;
 
-      if (driverEvent.snapshot.value != null) {
-        Map<dynamic, dynamic> driverData =
-        driverEvent.snapshot.value as Map<dynamic, dynamic>;
+        if (event.snapshot.value != null) {
+          Map<dynamic, dynamic> driverData =
+          event.snapshot.value as Map<dynamic, dynamic>;
 
-        setState(() {
-          driverStatus = (driverData["status"] ?? "registered").toString();
-        });
-      } else {
-        setState(() {
-          driverStatus = "registered";
-        });
-      }
+          setState(() {
+            driverStatus = (driverData["status"] ?? "registered").toString();
+          });
+        } else {
+          setState(() {
+            driverStatus = "registered";
+          });
+        }
+      });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         driverStatus = "registered";
       });
@@ -183,9 +189,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                           MaterialPageRoute(
                             builder: (c) => const DrivingLiceance(),
                           ),
-                        ).then((_) {
-                          fetchDriverStatus();
-                        });
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1A1A1A),
@@ -203,6 +207,12 @@ class _HomeTabPageState extends State<HomeTabPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    driverStatusSubscription?.cancel();
+    super.dispose();
   }
 
   @override
