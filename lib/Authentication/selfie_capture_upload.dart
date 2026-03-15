@@ -5,40 +5,39 @@
 
 import 'dart:io';
 
-import 'package:driver_app/Authentication/selfie_capture.dart';
+import 'package:driver_app/MainScreens/main_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class MedicalCertificateUpload extends StatefulWidget {
-  const MedicalCertificateUpload({super.key});
+class SelfieCaptureUpload extends StatefulWidget {
+  const SelfieCaptureUpload({super.key});
 
   @override
-  State<MedicalCertificateUpload> createState() =>
-      _MedicalCertificateUploadState();
+  State<SelfieCaptureUpload> createState() => _SelfieCaptureUploadState();
 }
 
-class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
+class _SelfieCaptureUploadState extends State<SelfieCaptureUpload> {
   final ImagePicker _picker = ImagePicker();
 
-  File? medicalImage;
+  File? selfieImage;
   bool isUploading = false;
 
-  Future<void> pickMedicalImage() async {
+  Future<void> pickSelfieImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
       setState(() {
-        medicalImage = File(image.path);
+        selfieImage = File(image.path);
       });
     }
   }
 
-  Future<void> uploadMedicalCertificateToFirebase() async {
-    if (medicalImage == null) {
+  Future<void> uploadSelfieToFirebase() async {
+    if (selfieImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please capture the medical certificate")),
+        const SnackBar(content: Text("Please capture your selfie")),
       );
       return;
     }
@@ -61,24 +60,25 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
       }
 
       final String uid = user.uid;
-      String medicalUrl = "";
+      String selfieUrl = "";
 
       try {
-        final medicalRef = FirebaseStorage.instance
+        final selfieRef = FirebaseStorage.instance
             .ref()
-            .child("drivers/$uid/medical_certificate.jpg");
+            .child("drivers/$uid/selfie.jpg");
 
-        await medicalRef.putFile(medicalImage!);
-        medicalUrl = await medicalRef.getDownloadURL();
+        await selfieRef.putFile(selfieImage!);
+        selfieUrl = await selfieRef.getDownloadURL();
       } catch (storageError) {
         debugPrint("Storage upload failed: $storageError");
-        medicalUrl = "upload_failed";
+        selfieUrl = "upload_failed";
       }
 
       await FirebaseDatabase.instance.ref().child("drivers").child(uid).update({
-        "medicalCertificateUrl": medicalUrl,
-        "status": "registered",
-        "verificationSubmitted": false,
+        "selfieUrl": selfieUrl,
+        "profileImageUrl": selfieUrl,
+        "status": "pending_verification",
+        "verificationSubmitted": true,
         "verificationApproved": false,
       });
 
@@ -88,13 +88,14 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Medical certificate submitted."),
+          content: Text("Selfie submitted successfully."),
         ),
       );
 
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (c) => const SelfieCapture()),
+        MaterialPageRoute(builder: (c) => MainScreen()),
+            (route) => false,
       );
     } catch (e) {
       setState(() {
@@ -109,16 +110,16 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
 
   Widget buildImagePickerCard() {
     return GestureDetector(
-      onTap: isUploading ? null : pickMedicalImage,
+      onTap: isUploading ? null : pickSelfieImage,
       child: Container(
         width: double.infinity,
-        height: 180,
+        height: 220,
         decoration: BoxDecoration(
           color: Colors.grey.shade50,
           border: Border.all(color: Colors.grey.shade400),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: medicalImage == null
+        child: selfieImage == null
             ? Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: const [
@@ -129,7 +130,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
             ),
             SizedBox(height: 10),
             Text(
-              "Medical Certificate",
+              "Selfie Photo",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -138,7 +139,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
             ),
             SizedBox(height: 6),
             Text(
-              "Tap to capture your medical certificate",
+              "Tap to capture your selfie",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
@@ -152,7 +153,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.file(
-                medicalImage!,
+                selfieImage!,
                 width: double.infinity,
                 height: double.infinity,
                 fit: BoxFit.cover,
@@ -188,7 +189,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
-          "Upload Medical Certificate",
+          "Upload Selfie",
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
@@ -201,7 +202,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Medical Verification",
+                "Selfie Verification",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -210,7 +211,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
               ),
               const SizedBox(height: 8),
               const Text(
-                "Please upload a clear image of your medical certificate.",
+                "Please take a clear front-facing selfie. This will also be used as your profile picture.",
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.black54,
@@ -225,7 +226,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
                   onPressed: isUploading
                       ? null
                       : () {
-                    uploadMedicalCertificateToFirebase();
+                    uploadSelfieToFirebase();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A1A1A),
@@ -245,7 +246,7 @@ class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
                     ),
                   )
                       : const Text(
-                    "Upload Medical Certificate",
+                    "Upload Selfie",
                     style: TextStyle(fontSize: 15),
                   ),
                 ),
