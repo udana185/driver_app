@@ -1,6 +1,8 @@
 import 'package:driver_app/Authentication/driving_liceance.dart';
 import 'package:driver_app/Authentication/login_screen.dart';
 import 'package:driver_app/Global/global.dart';
+import 'package:driver_app/MainScreens/main_screen.dart';
+import 'package:driver_app/tabPages/home_tab.dart';
 import 'package:driver_app/widgets/progress_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -93,7 +95,7 @@ class _SignupScreenState extends State<SignupScreenTwo> {
         if (mounted) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (c) => DrivingLiceance()),
+            MaterialPageRoute(builder: (c) => MainScreen()),
           );
         }
       } else {
