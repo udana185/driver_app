@@ -5,49 +5,40 @@
 
 import 'dart:io';
 
-import 'package:driver_app/Authentication/medical_certificate.dart';
+import 'package:driver_app/MainScreens/main_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-class DrivingLiceanceUpload extends StatefulWidget {
-  const DrivingLiceanceUpload({super.key});
+class MedicalCertificateUpload extends StatefulWidget {
+  const MedicalCertificateUpload({super.key});
 
   @override
-  State<DrivingLiceanceUpload> createState() => _DrivingLiceanceUploadState();
+  State<MedicalCertificateUpload> createState() =>
+      _MedicalCertificateUploadState();
 }
 
-class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
+class _MedicalCertificateUploadState extends State<MedicalCertificateUpload> {
   final ImagePicker _picker = ImagePicker();
 
-  File? frontImage;
-  File? backImage;
+  File? medicalImage;
   bool isUploading = false;
 
-  Future<void> pickFrontImage() async {
+  Future<void> pickMedicalImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.camera);
     if (image != null) {
       setState(() {
-        frontImage = File(image.path);
+        medicalImage = File(image.path);
       });
     }
   }
 
-  Future<void> pickBackImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.camera);
-    if (image != null) {
-      setState(() {
-        backImage = File(image.path);
-      });
-    }
-  }
-
-  Future<void> uploadLicenseToFirebase() async {
-    if (frontImage == null || backImage == null) {
+  Future<void> uploadMedicalCertificateToFirebase() async {
+    if (medicalImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please capture both images")),
+        const SnackBar(content: Text("Please capture the medical certificate")),
       );
       return;
     }
@@ -70,35 +61,24 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
       }
 
       final String uid = user.uid;
-
-      String frontUrl = "";
-      String backUrl = "";
+      String medicalUrl = "";
 
       try {
-        final frontRef = FirebaseStorage.instance
+        final medicalRef = FirebaseStorage.instance
             .ref()
-            .child("drivers/$uid/license_front.jpg");
+            .child("drivers/$uid/medical_certificate.jpg");
 
-        final backRef = FirebaseStorage.instance
-            .ref()
-            .child("drivers/$uid/license_back.jpg");
-
-        await frontRef.putFile(frontImage!);
-        await backRef.putFile(backImage!);
-
-        frontUrl = await frontRef.getDownloadURL();
-        backUrl = await backRef.getDownloadURL();
+        await medicalRef.putFile(medicalImage!);
+        medicalUrl = await medicalRef.getDownloadURL();
       } catch (storageError) {
         debugPrint("Storage upload failed: $storageError");
-        frontUrl = "upload_failed";
-        backUrl = "upload_failed";
+        medicalUrl = "upload_failed";
       }
 
       await FirebaseDatabase.instance.ref().child("drivers").child(uid).update({
-        "licenceFrontUrl": frontUrl,
-        "licenceBackUrl": backUrl,
-        "status": "registered",
-        "verificationSubmitted": false,
+        "medicalCertificateUrl": medicalUrl,
+        "status": "pending_verification",
+        "verificationSubmitted": true,
         "verificationApproved": false,
       });
 
@@ -108,15 +88,14 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Driving license details submitted."),
+          content: Text("Medical certificate submitted."),
         ),
       );
 
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (c) => const MedicalCertificate(),
-        ),
+        MaterialPageRoute(builder: (c) => MainScreen()),
+            (route) => false,
       );
     } catch (e) {
       setState(() {
@@ -129,45 +108,40 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
     }
   }
 
-  Widget buildImagePickerCard({
-    required String title,
-    required String subtitle,
-    required File? imageFile,
-    required VoidCallback onTap,
-  }) {
+  Widget buildImagePickerCard() {
     return GestureDetector(
-      onTap: isUploading ? null : onTap,
+      onTap: isUploading ? null : pickMedicalImage,
       child: Container(
         width: double.infinity,
-        height: 170,
+        height: 180,
         decoration: BoxDecoration(
           color: Colors.grey.shade50,
           border: Border.all(color: Colors.grey.shade400),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: imageFile == null
+        child: medicalImage == null
             ? Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
+          children: const [
+            Icon(
               Icons.camera_alt_outlined,
               size: 34,
               color: Colors.black54,
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
-              title,
-              style: const TextStyle(
+              "Medical Certificate",
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1A1A1A),
               ),
             ),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             Text(
-              subtitle,
+              "Tap to capture your medical certificate",
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 color: Colors.black54,
               ),
@@ -179,7 +153,7 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Image.file(
-                imageFile,
+                medicalImage!,
                 width: double.infinity,
                 height: double.infinity,
                 fit: BoxFit.cover,
@@ -215,7 +189,7 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
-          "Upload Driving License",
+          "Upload Medical Certificate",
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
@@ -228,7 +202,7 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Driver Verification",
+                "Medical Verification",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -237,26 +211,14 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
               ),
               const SizedBox(height: 8),
               const Text(
-                "Please upload clear photos of the front and back of your driving license.",
+                "Please upload a clear image of your medical certificate.",
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.black54,
                 ),
               ),
               const SizedBox(height: 24),
-              buildImagePickerCard(
-                title: "Front Side",
-                subtitle: "Tap to capture the front of your license",
-                imageFile: frontImage,
-                onTap: pickFrontImage,
-              ),
-              const SizedBox(height: 18),
-              buildImagePickerCard(
-                title: "Back Side",
-                subtitle: "Tap to capture the back of your license",
-                imageFile: backImage,
-                onTap: pickBackImage,
-              ),
+              buildImagePickerCard(),
               const SizedBox(height: 30),
               SizedBox(
                 width: double.infinity,
@@ -264,7 +226,7 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
                   onPressed: isUploading
                       ? null
                       : () {
-                    uploadLicenseToFirebase();
+                    uploadMedicalCertificateToFirebase();
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1A1A1A),
@@ -284,7 +246,7 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
                     ),
                   )
                       : const Text(
-                    "Upload License",
+                    "Upload Medical Certificate",
                     style: TextStyle(fontSize: 15),
                   ),
                 ),

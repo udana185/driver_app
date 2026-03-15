@@ -1,14 +1,14 @@
-import 'package:driver_app/Authentication/driving_liceance_upload.dart';
+import 'package:driver_app/Authentication/medical_certificate_upload.dart';
 import 'package:flutter/material.dart';
 
-class DrivingLiceance extends StatefulWidget {
-  const DrivingLiceance({super.key});
+class MedicalCertificate extends StatefulWidget {
+  const MedicalCertificate({super.key});
 
   @override
-  State<DrivingLiceance> createState() => _DrivingLiceanceState();
+  State<MedicalCertificate> createState() => _MedicalCertificateState();
 }
 
-class _DrivingLiceanceState extends State<DrivingLiceance> {
+class _MedicalCertificateState extends State<MedicalCertificate> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,7 +17,7 @@ class _DrivingLiceanceState extends State<DrivingLiceance> {
         backgroundColor: Colors.black,
         iconTheme: const IconThemeData(color: Colors.white),
         title: const Text(
-          "License Verification",
+          "Medical Certificate",
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
@@ -29,13 +29,13 @@ class _DrivingLiceanceState extends State<DrivingLiceance> {
           children: [
             const SizedBox(height: 20),
             const Icon(
-              Icons.badge_outlined,
+              Icons.health_and_safety_outlined,
               size: 120,
               color: Colors.black,
             ),
             const SizedBox(height: 30),
             const Text(
-              "Driving License Required",
+              "Medical Certificate Required",
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -45,7 +45,7 @@ class _DrivingLiceanceState extends State<DrivingLiceance> {
             ),
             const SizedBox(height: 15),
             const Text(
-              "Please upload clear front and back images of your driving license to continue verification.",
+              "Please upload a clear image of your medical certificate to complete verification.",
               style: TextStyle(
                 fontSize: 15,
                 color: Colors.black54,
@@ -60,7 +60,7 @@ class _DrivingLiceanceState extends State<DrivingLiceance> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (c) => const DrivingLiceanceUpload(),
+                      builder: (c) => const MedicalCertificateUpload(),
                     ),
                   );
                 },
