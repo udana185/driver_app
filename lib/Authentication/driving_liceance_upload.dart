@@ -5,11 +5,13 @@
 
 import 'dart:io';
 import 'package:driver_app/Global/global.dart';
+import 'package:driver_app/tabPages/home_tab.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:driver_app/MainScreens/main_screen.dart';
 
 class DrivingLiceanceUpload extends StatefulWidget {
   const DrivingLiceanceUpload({super.key});
@@ -116,7 +118,11 @@ class _DrivingLiceanceUploadState extends State<DrivingLiceanceUpload> {
         ),
       );
 
-      Navigator.pop(context);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (c) => MainScreen()),
+            (route) => false,
+      );
     } catch (e) {
       setState(() {
         isUploading = false;

@@ -125,7 +125,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
       title = "Verification Pending";
       message =
       "Your documents are under review. You will become eligible once verification is approved.";
-      showButton = true;
+      showButton = false;
     } else if (driverStatus == "rejected") {
       title = "Verification Rejected";
       message =
@@ -151,7 +151,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.orange.shade200),
+              border: Border.all(color: Colors.orangeAccent),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +181,7 @@ class _HomeTabPageState extends State<HomeTabPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (c) => DrivingLiceance(),
+                            builder: (c) => const DrivingLiceance(),
                           ),
                         ).then((_) {
                           fetchDriverStatus();
